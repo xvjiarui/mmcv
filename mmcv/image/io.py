@@ -5,6 +5,7 @@ import numpy as np
 
 from mmcv.opencv_info import USE_OPENCV2
 from mmcv.utils import check_file_exist, is_str, mkdir_or_exist
+from .zipreader import ZipReader
 
 if not USE_OPENCV2:
     from cv2 import IMREAD_COLOR, IMREAD_GRAYSCALE, IMREAD_UNCHANGED
@@ -37,6 +38,8 @@ def imread(img_or_path, flag='color'):
         return img_or_path
     elif is_str(img_or_path):
         flag = imread_flags[flag] if is_str(flag) else flag
+        if ZipReader.is_zip_path(img_or_path):
+            return imfrombytes(ZipReader.read(img_or_path), flag)
         check_file_exist(img_or_path,
                          'img file does not exist: {}'.format(img_or_path))
         return cv2.imread(img_or_path, flag)

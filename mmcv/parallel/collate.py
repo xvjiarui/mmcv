@@ -23,6 +23,9 @@ def collate(batch, samples_per_gpu=1):
         raise TypeError("{} is not supported.".format(batch.dtype))
 
     if isinstance(batch[0], DataContainer):
+        if len(batch) % samples_per_gpu != 0:
+            assert len(batch) < samples_per_gpu, '{} < {}'.format(len(batch), samples_per_gpu)
+            samples_per_gpu = len(batch)
         assert len(batch) % samples_per_gpu == 0
         stacked = []
         if batch[0].cpu_only:
