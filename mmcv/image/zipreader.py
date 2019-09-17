@@ -23,7 +23,7 @@ class ZipReader(object):
         if path in zip_bank:
             return zip_bank[path]
         else:
-            # print("creating new zip_bank")
+            print("creating new zip_bank: {}".format(path))
             zfile = zipfile.ZipFile(path, 'r')
             zip_bank[path] = zfile
             return zip_bank[path]
