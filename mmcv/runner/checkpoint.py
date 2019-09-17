@@ -112,11 +112,11 @@ def load_url_dist(url):
     rank, world_size = get_dist_info()
     rank = int(os.environ.get('LOCAL_RANK', rank))
     if rank == 0:
-        checkpoint = model_zoo.load_url(url)
+        checkpoint = model_zoo.load_url(url, progress=False)
     if world_size > 1:
         torch.distributed.barrier()
         if rank > 0:
-            checkpoint = model_zoo.load_url(url)
+            checkpoint = model_zoo.load_url(url, progress=False)
     return checkpoint
 
 
