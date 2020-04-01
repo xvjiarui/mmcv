@@ -58,4 +58,7 @@ class Hook(object):
         return (runner.iter + 1) % n == 0 if n > 0 else False
 
     def end_of_epoch(self, runner):
-        return runner.inner_iter + 1 == len(runner.data_loader)
+        if hasattr(runner.data_loader, '__len__'):
+            return runner.inner_iter + 1 == len(runner.data_loader)
+        else:
+            return False
