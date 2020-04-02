@@ -13,7 +13,7 @@ class IterLoader(object):
     def __init__(self, dataloader):
         self._dataloader = dataloader
         self.iter_loader = iter(self._dataloader)
-        self._epoch = 1
+        self._epoch = 0
 
     @property
     def epoch(self):
