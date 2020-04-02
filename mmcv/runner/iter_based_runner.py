@@ -2,8 +2,6 @@
 import os.path as osp
 import time
 
-import torch
-
 import mmcv
 from .base_runner import BaseRunner
 from .checkpoint import save_checkpoint
@@ -56,21 +54,18 @@ class IterBasedRunner(BaseRunner):
     def val(self, data_loader, **kwargs):
         self.model.eval()
         self.mode = 'val'
+        self._inner_iter = 0
         self.data_loader = data_loader
-
-        for i, data_batch in enumerate(data_loader):
-            self._inner_iter = i
-            self.call_hook('before_val_iter')
-            with torch.no_grad():
-                outputs = self.model.val_step(data_batch, self.optimizer,
-                                              **kwargs)
-            if not isinstance(outputs, dict):
-                raise TypeError('model.val_step() must return a dict')
-            if 'log_vars' in outputs:
-                self.log_buffer.update(outputs['log_vars'],
-                                       outputs['num_samples'])
-            self.outputs = outputs
-            self.call_hook('after_val_iter')
+        self.call_hook('before_val_iter')
+        data_batch = next(data_loader)
+        outputs = self.model.val_step(data_batch, self.optimizer, **kwargs)
+        if not isinstance(outputs, dict):
+            raise TypeError('model.val_step() must return a dict')
+        if 'log_vars' in outputs:
+            self.log_buffer.update(outputs['log_vars'], outputs['num_samples'])
+        self.outputs = outputs
+        self.call_hook('after_val_iter')
+        self._inner_iter += 1
 
     def run(self, data_loaders, workflow, max_iters, **kwargs):
         """Start running.
