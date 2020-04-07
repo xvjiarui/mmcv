@@ -103,7 +103,7 @@ class IterBasedRunner(BaseRunner):
                         format(mode))
                 iter_runner = getattr(self, mode)
                 for _ in range(iters):
-                    if mode == 'train' and self.epoch >= max_iters:
+                    if mode == 'train' and self.iter >= max_iters:
                         return
                     iter_runner(iter_loaders[i], **kwargs)
 
