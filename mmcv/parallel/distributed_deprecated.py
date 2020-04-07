@@ -52,3 +52,31 @@ class MMDistributedDataParallel(nn.Module):
         inputs, kwargs = self.scatter(inputs, kwargs,
                                       [torch.cuda.current_device()])
         return self.module(*inputs[0], **kwargs[0])
+
+    def train_step(self, *inputs, **kwargs):
+        if self.device_ids:
+            inputs, kwargs = self.scatter(inputs, kwargs, self.device_ids)
+            if len(self.device_ids) == 1:
+                output = self.module.train_step(*inputs[0], **kwargs[0])
+            else:
+                outputs = self.parallel_apply(
+                    self._module_copies[:len(inputs)], inputs, kwargs)
+                output = self.gather(outputs, self.output_device)
+        else:
+            output = self.module.train_step(*inputs, **kwargs)
+
+        return output
+
+    def val_step(self, *inputs, **kwargs):
+        if self.device_ids:
+            inputs, kwargs = self.scatter(inputs, kwargs, self.device_ids)
+            if len(self.device_ids) == 1:
+                output = self.module.val_step(*inputs[0], **kwargs[0])
+            else:
+                outputs = self.parallel_apply(
+                    self._module_copies[:len(inputs)], inputs, kwargs)
+                output = self.gather(outputs, self.output_device)
+        else:
+            output = self.module.val_step(*inputs, **kwargs)
+
+        return output
