@@ -54,11 +54,13 @@ class MMDistributedDataParallel(nn.Module):
         return self.module(*inputs[0], **kwargs[0])
 
     def train_step(self, *inputs, **kwargs):
-        inputs, kwargs = self.scatter(inputs, kwargs, [torch.cuda.current_device()])
+        inputs, kwargs = self.scatter(inputs, kwargs,
+                                      [torch.cuda.current_device()])
         output = self.module.train_step(*inputs[0], **kwargs[0])
         return output
 
     def val_step(self, *inputs, **kwargs):
-        inputs, kwargs = self.scatter(inputs, kwargs, [torch.cuda.current_device()])
+        inputs, kwargs = self.scatter(inputs, kwargs,
+                                      [torch.cuda.current_device()])
         output = self.module.val_step(*inputs[0], **kwargs[0])
         return output
