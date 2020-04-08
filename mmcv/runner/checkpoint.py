@@ -157,7 +157,7 @@ def _load_checkpoint(filename, map_location=None):
     elif filename.startswith(('http://', 'https://')):
         checkpoint = load_url_dist(filename)
     else:
-        if not osp.isfile(filename) and not filename.endswith('.tar'):
+        if not osp.isfile(filename):
             raise IOError('{} is not a checkpoint file'.format(filename))
         checkpoint = torch.load(filename, map_location=map_location)
     return checkpoint
