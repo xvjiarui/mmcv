@@ -131,6 +131,7 @@ class IterBasedRunner(BaseRunner):
 
         self._epoch = checkpoint['meta']['epoch']
         self._iter = checkpoint['meta']['iter']
+        self._inner_iter = checkpoint['meta']['iter']
         if 'optimizer' in checkpoint and resume_optimizer:
             if isinstance(self.optimizer, Optimizer):
                 self.optimizer.load_state_dict(checkpoint['optimizer'])
@@ -139,8 +140,7 @@ class IterBasedRunner(BaseRunner):
                     self.optimizer[k].load_state_dict(
                         checkpoint['optimizer'][k])
 
-        self.logger.info(f'resumed from {checkpoint}: epoch {self.epoch}, '
-                         f'iter {self.iter}')
+        self.logger.info(f'resumed from epoch: {self.epoch}, iter {self.iter}')
 
     def save_checkpoint(self,
                         out_dir,
@@ -149,9 +149,9 @@ class IterBasedRunner(BaseRunner):
                         save_optimizer=True,
                         create_symlink=True):
         if meta is None:
-            meta = dict(iter=self.iter + 1)
+            meta = dict(iter=self.iter + 1, epoch=self.epoch + 1)
         elif isinstance(meta, dict):
-            meta.update(iter=self.iter + 1)
+            meta.update(iter=self.iter + 1, epoch=self.epoch + 1)
         else:
             raise TypeError(
                 f'meta should be a dict or None, but got {type(meta)}')
