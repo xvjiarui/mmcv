@@ -9,6 +9,7 @@ from importlib import import_module
 
 import torch
 import torchvision
+from torch.optim import Optimizer
 from torch.utils import model_zoo
 
 import mmcv
@@ -243,7 +244,11 @@ def save_checkpoint(model, filename, optimizer=None, meta=None):
         'meta': meta,
         'state_dict': weights_to_cpu(model.state_dict())
     }
-    if optimizer is not None:
+    if isinstance(optimizer, Optimizer):
         checkpoint['optimizer'] = optimizer.state_dict()
+    elif isinstance(optimizer, dict):
+        checkpoint['optimizer'] = {}
+        for k, optim in optimizer.items():
+            checkpoint['optimizer']['k'] = optim.state_dict()
 
     torch.save(checkpoint, filename)

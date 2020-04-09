@@ -2,6 +2,9 @@
 import os.path as osp
 import time
 
+import torch
+from torch.optim import Optimizer
+
 import mmcv
 from .base_runner import BaseRunner
 from .checkpoint import save_checkpoint
@@ -110,6 +113,34 @@ class IterBasedRunner(BaseRunner):
         time.sleep(1)  # wait for some hooks like loggers to finish
         self.call_hook('after_epoch')
         self.call_hook('after_run')
+
+    def resume(self,
+               checkpoint,
+               resume_optimizer=True,
+               map_location='default'):
+        """Rewrite the default function to support optimizer dict
+        """
+        if map_location == 'default':
+            device_id = torch.cuda.current_device()
+            checkpoint = self.load_checkpoint(
+                checkpoint,
+                map_location=lambda storage, loc: storage.cuda(device_id))
+        else:
+            checkpoint = self.load_checkpoint(
+                checkpoint, map_location=map_location)
+
+        self._epoch = checkpoint['meta']['epoch']
+        self._iter = checkpoint['meta']['iter']
+        if 'optimizer' in checkpoint and resume_optimizer:
+            if isinstance(self.optimizer, Optimizer):
+                self.optimizer.load_state_dict(checkpoint['optimizer'])
+            elif isinstance(self.optimizer, dict):
+                for k in self.optimizer.keys():
+                    self.optimizer[k].load_state_dict(
+                        checkpoint['optimizer'][k])
+
+        self.logger.info(f'resumed from {checkpoint}: epoch {self.epoch}, '
+                         f'iter {self.iter}')
 
     def save_checkpoint(self,
                         out_dir,
