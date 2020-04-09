@@ -249,6 +249,6 @@ def save_checkpoint(model, filename, optimizer=None, meta=None):
     elif isinstance(optimizer, dict):
         checkpoint['optimizer'] = {}
         for k, optim in optimizer.items():
-            checkpoint['optimizer']['k'] = optim.state_dict()
+            checkpoint['optimizer'][k] = optim.state_dict()
 
     torch.save(checkpoint, filename)
