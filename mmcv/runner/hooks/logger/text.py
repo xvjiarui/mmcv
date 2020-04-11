@@ -37,9 +37,9 @@ class TextLoggerHook(LoggerHook):
 
     def _log_info(self, log_dict, runner):
         if runner.mode == 'train':
-            log_str = 'Epoch [{}][{}/{}]\tlr: {:.5f}, '.format(
-                log_dict['epoch'], log_dict['iter'], len(runner.data_loader),
-                log_dict['lr'])
+            log_str = 'Exp Name: {}\tEpoch [{}][{}/{}]\tlr: {:.5f}, '.format(
+                runner.meta['exp_name'], log_dict['epoch'], log_dict['iter'],
+                len(runner.data_loader), log_dict['lr'])
             if 'time' in log_dict.keys():
                 self.time_sec_tot += (log_dict['time'] * self.interval)
                 time_sec_avg = self.time_sec_tot / (
@@ -123,16 +123,17 @@ class TextLoggerHook(LoggerHook):
 class IterTextLoggerHook(TextLoggerHook):
 
     def _log_info(self, log_dict, runner):
+        log_str = 'Exp Name: {}\t'.format(runner.meta['exp_name'])
         if runner.mode == 'train':
             if isinstance(log_dict['lr'], dict):
                 lr_str = ''
                 for k, val in log_dict['lr'].items():
                     lr_str += '{}: {:.4e} '.format('lr_' + k, val)
-                log_str = 'Epoch [{}][{}/{}]\t{}, '.format(
+                log_str += 'Epoch [{}][{}/{}]\t{}, '.format(
                     log_dict['epoch'], log_dict['iter'], runner.max_iters,
                     lr_str)
             else:
-                log_str = 'Epoch [{}][{}/{}]\tlr: {:.4e}, '.format(
+                log_str += 'Epoch [{}][{}/{}]\tlr: {:.4e}, '.format(
                     log_dict['epoch'], log_dict['iter'], runner.max_iters,
                     log_dict['lr'])
             if 'time' in log_dict.keys():
@@ -146,8 +147,8 @@ class IterTextLoggerHook(TextLoggerHook):
                     log_dict['time'], log_dict['data_time']))
                 log_str += 'memory: {}, '.format(log_dict['memory'])
         else:
-            log_str = 'Iter({}) [{}]\t'.format(log_dict['mode'],
-                                               log_dict['iter'])
+            log_str += 'Iter({}) [{}]\t'.format(log_dict['mode'],
+                                                log_dict['iter'])
         log_items = []
         for name, val in log_dict.items():
             # TODO: resolve this hack
