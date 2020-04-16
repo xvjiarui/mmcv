@@ -163,7 +163,7 @@ class BaseRunner(metaclass=ABCMeta):
     def register_lr_hook(self, lr_config):
         if isinstance(lr_config, dict):
             assert 'policy' in lr_config
-            hook_type = lr_config.pop('policy').title() + 'LrUpdaterHook'
+            hook_type = lr_config.pop('policy') + 'LrUpdaterHook'
             lr_config['type'] = hook_type
             hook = mmcv.build_from_cfg(lr_config, HOOKS)
         else:

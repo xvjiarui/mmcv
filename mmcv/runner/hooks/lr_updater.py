@@ -241,3 +241,53 @@ class CosineLrUpdaterHook(LrUpdaterHook):
             max_progress = runner.max_iters
         return self.target_lr + 0.5 * (base_lr - self.target_lr) * \
             (1 + cos(pi * (progress / max_progress)))
+
+
+@HOOKS.register_module
+class CosineRestartLrUpdaterHook(LrUpdaterHook):
+    """ Cosine annealing with restarts learning rate scheme.
+
+    Args:
+        period (list[int]): Period for each cosine anneling cycle.
+        restarts (list[int]): Restart iterations. Default: [0].
+        restart_weights (list[float]): Restart weights at each restart
+            iteration. Default: [1].
+        eta_min (float): The mimimum lr. Default: 0.
+    """
+
+    def __init__(self,
+                 period,
+                 restarts=[0],
+                 restart_weights=[1],
+                 eta_min=0,
+                 **kwargs):
+        self.period = period
+        self.eta_min = eta_min
+        self.restarts = restarts
+        self.restart_weights = restart_weights
+        assert len(self.restarts) == len(
+            self.restart_weights), 'restarts and their weights do not match.'
+        assert (len(self.period) - len(self.restarts)
+                ) == 1, 'period should have one more element then restarts.'
+
+        super(CosineRestartLrUpdaterHook, self).__init__(**kwargs)
+
+        self.current_weight = 1
+        self.nearest_restart = 0
+        self.current_period = self.period[0]
+
+    def get_lr(self, runner, base_lr):
+        if self.by_epoch:
+            progress = runner.epoch
+        else:
+            progress = runner.iter
+
+        if progress in self.restarts:
+            idx = self.restarts.index(progress)
+            self.current_weight = self.restart_weights[idx]
+            self.current_period = self.period[idx]
+            self.nearest_restart = progress
+
+        return self.eta_min + self.current_weight * 0.5 * (
+            base_lr - self.eta_min) * (1 + cos(pi * (
+                (progress - self.nearest_restart) / self.current_period)))
