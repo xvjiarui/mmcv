@@ -37,3 +37,4 @@ class CheckpointHook(Hook):
             self.out_dir = runner.work_dir
         runner.save_checkpoint(
             self.out_dir, save_optimizer=self.save_optimizer, **self.args)
+        runner.logger.info(f'Save checkpoint at {runner.iter} iterations')

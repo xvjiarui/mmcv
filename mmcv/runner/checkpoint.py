@@ -250,5 +250,6 @@ def save_checkpoint(model, filename, optimizer=None, meta=None):
         checkpoint['optimizer'] = {}
         for k, optim in optimizer.items():
             checkpoint['optimizer'][k] = optim.state_dict()
-
-    torch.save(checkpoint, filename)
+    # use file context to immediately flush the buffer
+    with open(filename, 'wb') as f:
+        torch.save(checkpoint, f)
