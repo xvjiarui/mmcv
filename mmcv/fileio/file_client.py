@@ -1,4 +1,3 @@
-# Copyright (c) Open-MMLab. All rights reserved.
 import inspect
 from abc import ABCMeta, abstractmethod
 
@@ -169,9 +168,9 @@ class FileClient(object):
 
     def __init__(self, backend='disk', **kwargs):
         if backend not in self._backends:
-            raise ValueError(f'Backend {backend} is not supported. '
-                             f'Currently supported ones are '
-                             f'{list(self._backends.keys())}')
+            raise ValueError(
+                f'Backend {backend} is not supported. Currently supported ones'
+                f' are {list(self._backends.keys())}')
         self.backend = backend
         self.client = self._backends[backend](**kwargs)
 
