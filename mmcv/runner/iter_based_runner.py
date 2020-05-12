@@ -13,10 +13,10 @@ from .utils import get_host_info
 
 class IterLoader(object):
 
-    def __init__(self, dataloader):
+    def __init__(self, dataloader, epoch=0):
         self._dataloader = dataloader
         self.iter_loader = iter(self._dataloader)
-        self._epoch = 0
+        self._epoch = epoch
 
     @property
     def epoch(self):
@@ -93,7 +93,7 @@ class IterBasedRunner(BaseRunner):
         self.logger.info('workflow: %s, max: %d iters', workflow, max_iters)
         self.call_hook('before_run')
 
-        iter_loaders = [IterLoader(x) for x in data_loaders]
+        iter_loaders = [IterLoader(x, epoch=self.epoch) for x in data_loaders]
 
         self.call_hook('before_epoch')
 

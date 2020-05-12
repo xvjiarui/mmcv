@@ -63,10 +63,19 @@ class TextLoggerHook(LoggerHook):
                 runner.logger.info(exp_info)
 
         if runner.mode == 'train':
-            log_str = f'Exp Name: {runner.meta["exp_name"]}\t' \
-                      f'Epoch [{log_dict["epoch"]}]' \
-                      f'[{log_dict["iter"]}/{len(runner.data_loader)}]\t' \
-                      f'lr: {log_dict["lr"]:.5f}, '
+            if hasattr(runner.data_loader, '__len__'):
+                iter_num = runner.max_iters
+            else:
+                iter_num = runner.max_iters
+            if isinstance(log_dict['lr'], dict):
+                lr_str = ''
+                for k, val in log_dict['lr'].items():
+                    lr_str += f'lr_{k}: {val:.5f} '
+            else:
+                lr_str = f'lr: {log_dict["lr"]:.5f}'
+            log_str = f'Epoch [{log_dict["epoch"]}]' \
+                      f'[{log_dict["iter"]}/{iter_num}]\t' \
+                      f'{lr_str}, '
             if 'time' in log_dict.keys():
                 self.time_sec_tot += (log_dict['time'] * self.interval)
                 time_sec_avg = self.time_sec_tot / (
