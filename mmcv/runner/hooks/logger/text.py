@@ -64,7 +64,7 @@ class TextLoggerHook(LoggerHook):
 
         if runner.mode == 'train':
             if hasattr(runner.data_loader, '__len__'):
-                iter_num = runner.max_iters
+                iter_num = len(runner.data_loader)
             else:
                 iter_num = runner.max_iters
             if isinstance(log_dict['lr'], dict):
