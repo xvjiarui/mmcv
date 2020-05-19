@@ -35,7 +35,7 @@ class CephBackend(BaseStorageBackend):
     def get(self, filepath):
         filepath = str(filepath)
         if self.path_maps is not None:
-            for k, v in self.path_maps:
+            for k, v in self.path_maps.items():
                 filepath = filepath.replace(k, v)
         value = self._client.Get(filepath)
         value_buf = memoryview(value)
