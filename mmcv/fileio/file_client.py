@@ -22,16 +22,21 @@ class BaseStorageBackend(metaclass=ABCMeta):
 class CephBackend(BaseStorageBackend):
     """Ceph storage backend."""
 
-    def __init__(self):
+    def __init__(self, path_maps=None):
         try:
             import ceph
         except ImportError:
             raise ImportError('Please install ceph to enable CephBackend.')
 
         self._client = ceph.S3Client()
+        assert isinstance(path_maps, dict) or path_maps is None
+        self.path_maps = path_maps
 
     def get(self, filepath):
         filepath = str(filepath)
+        if self.path_maps is not None:
+            for k, v in self.path_maps:
+                filepath = filepath.replace(k, v)
         value = self._client.Get(filepath)
         value_buf = memoryview(value)
         return value_buf
