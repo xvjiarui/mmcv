@@ -8,6 +8,7 @@ import mmcv
 from mmcv import BaseStorageBackend, FileClient
 
 sys.modules['ceph'] = MagicMock()
+sys.modules['petrel_client'] = MagicMock()
 sys.modules['mc'] = MagicMock()
 
 
