@@ -24,11 +24,11 @@ class CephBackend(BaseStorageBackend):
 
     def __init__(self, path_maps=None):
         try:
-            from petrel_client.client import Client
+            import petrel_client
         except ImportError:
             raise ImportError('Please install ceph to enable CephBackend.')
 
-        self._client = Client()
+        self._client = petrel_client.client.Client()
         assert isinstance(path_maps, dict) or path_maps is None
         self.path_maps = path_maps
 
