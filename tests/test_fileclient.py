@@ -59,6 +59,7 @@ class TestFileClient(object):
         value_buf = disk_backend.get_text(str(self.text_path))
         assert self.text_path.open('r').read() == value_buf
 
+    @patch('petrel_client.client', MockS3Client)
     @patch('ceph.S3Client', MockS3Client)
     def test_ceph_backend(self):
         ceph_backend = FileClient('ceph')
