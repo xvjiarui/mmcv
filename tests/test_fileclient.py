@@ -9,6 +9,7 @@ from mmcv import BaseStorageBackend, FileClient
 
 sys.modules['ceph'] = MagicMock()
 sys.modules['petrel_client'] = MagicMock()
+sys.modules['petrel_client.client'] = MagicMock()
 sys.modules['mc'] = MagicMock()
 
 
@@ -60,7 +61,6 @@ class TestFileClient(object):
         value_buf = disk_backend.get_text(str(self.text_path))
         assert self.text_path.open('r').read() == value_buf
 
-    @patch('petrel_client.client.Client', MockS3Client)
     @patch('ceph.S3Client', MockS3Client)
     def test_ceph_backend(self):
         with pytest.warns(
