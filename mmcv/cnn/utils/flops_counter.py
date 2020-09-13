@@ -78,6 +78,27 @@ def get_model_complexity_info(model,
             FLOPs and parameter counts in a string format. otherwise, it will
             return those in a float number format.
     """
+    from mmcv.ops import CrissCrossAttention
+    from mmcv.cnn import NonLocal2d, ContextBlock
+    from mmseg.models.utils import SelfAttentionBlock
+    from mmseg.models.decode_heads.da_head import PAM, CAM
+    from mmseg.models.decode_heads.ann_head import SelfAttentionBlock as ANNSA
+    new_ops = {
+        # CCNet
+        CrissCrossAttention: ccnet_counter_hook,
+        # Nonlocal
+        NonLocal2d: nonlocal_counter_hook,
+        # Self-Attention
+        SelfAttentionBlock: self_attention_counter_hook,
+        ANNSA: self_attention_counter_hook,
+        # GCNet
+        ContextBlock: gc_counter_hook,
+        # CAM
+        CAM: ca_attention_counter_hook,
+        # PAM
+        PAM: pa_attention_counter_hook,
+    }
+    MODULES_MAPPING.update(new_ops)
     assert type(input_shape) is tuple
     assert len(input_shape) >= 1
     assert isinstance(model, nn.Module)
@@ -504,6 +525,81 @@ def batch_counter_hook(module, input, output):
     module.__batch_counter__ += batch_size
 
 
+def ccnet_counter_hook(module, input, output):
+    channels = module.in_channels // 8
+    output_dims = list(output.shape[2:])
+    overall_flops = np.prod(output_dims) * (np.sum(output_dims) -
+                                            1) * channels * 2
+    module.__flops__ += int(overall_flops)
+
+
+def nonlocal_counter_hook(module, input, output):
+    channels = module.inter_channels
+    output_dims = list(output.shape[2:])
+    overall_flops = np.prod(output_dims)**2 * channels * 2
+    module.__flops__ += int(overall_flops)
+
+
+def gc_counter_hook(module, input, output):
+    channels = module.planes
+    output_dims = list(output.shape[2:])
+    overall_flops = np.prod(output_dims) * channels
+    module.__flops__ += int(overall_flops)
+
+
+def self_attention_counter_hook(module, input, output):
+    query_feats = input[0]
+    key_feats = input[1]
+    query = module.query_project(query_feats)
+    key = module.key_project(key_feats)
+    value = module.value_project(key_feats)
+    if module.key_downsample is not None:
+        key = module.key_downsample(key)
+        value = module.key_downsample(value)
+    if module.query_downsample is not None:
+        query = module.query_downsample(query)
+    query_dims = list(query.shape[2:])
+    key_dims = list(key.shape[2:])
+    value_dims = list(value.shape[2:])
+    query_channels = query.size(1)
+    value_channels = value.size(1)
+    print('flops:', np.prod(query_dims), np.prod(key_dims), query_channels)
+    overall_flops = np.prod(query_dims) * np.prod(key_dims) * query_channels
+    print('flops:', np.prod(query_dims), np.prod(value_dims), value_channels)
+    overall_flops += np.prod(query_dims) * np.prod(value_dims) * value_channels
+    module.__flops__ += int(overall_flops)
+
+
+def pa_attention_counter_hook(module, input, output):
+    query_feats = input[0]
+    key_feats = input[0]
+    query = module.query_project(query_feats)
+    key = module.key_project(key_feats)
+    value = module.value_project(key_feats)
+    if module.key_downsample is not None:
+        key = module.key_downsample(key)
+        value = module.key_downsample(value)
+    if module.query_downsample is not None:
+        query = module.query_downsample(query)
+    query_dims = list(query.shape[2:])
+    key_dims = list(key.shape[2:])
+    value_dims = list(value.shape[2:])
+    query_channels = query.size(1)
+    value_channels = value.size(1)
+    print('flops:', np.prod(query_dims), np.prod(key_dims), query_channels)
+    overall_flops = np.prod(query_dims) * np.prod(key_dims) * query_channels
+    print('flops:', np.prod(query_dims), np.prod(value_dims), value_channels)
+    overall_flops += np.prod(query_dims) * np.prod(value_dims) * value_channels
+    module.__flops__ += int(overall_flops)
+
+
+def ca_attention_counter_hook(module, input, output):
+    batch_size, channels, height, width = output.size()
+    output_dims = list(output.shape[2:])
+    overall_flops = np.prod(output_dims) * channels**2 * 2
+    module.__flops__ += int(overall_flops)
+
+
 def add_batch_counter_variables_or_reset(module):
 
     module.__batch_counter__ = 0
@@ -574,6 +670,7 @@ MODULES_MAPPING = {
     nn.BatchNorm1d: bn_flops_counter_hook,
     nn.BatchNorm2d: bn_flops_counter_hook,
     nn.BatchNorm3d: bn_flops_counter_hook,
+    nn.SyncBatchNorm: bn_flops_counter_hook,
     # FC
     nn.Linear: linear_flops_counter_hook,
     # Upscale
